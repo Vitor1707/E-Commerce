@@ -1,6 +1,6 @@
 package com.example.ecommerce.EcommerceAplication.services;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.UserUpdateRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.updates.UserUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.dtos.responses.UserResponse;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
@@ -25,6 +25,12 @@ public class UserService {
     public Page<UserResponse> UsersPaginated(Pageable pageable) {
         Page<User> usersPage = userRepository.findAll(pageable);
         return usersPage.map(UserResponse::new);
+    }
+
+    public UserResponse getUserById(Long id) {
+        return userRepository.findById(id)
+                .map(UserResponse::new)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
     }
 
     public UserResponse updateUser(Long id, UserUpdateRequest request) {

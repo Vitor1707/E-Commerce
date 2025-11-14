@@ -1,6 +1,6 @@
 package com.example.ecommerce.EcommerceAplication.controller;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.UserUpdateRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.updates.UserUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.dtos.responses.UserResponse;
 import com.example.ecommerce.EcommerceAplication.services.UserService;
 import jakarta.validation.Valid;
@@ -36,6 +36,12 @@ public class UserController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
         Page<UserResponse> response = userService.UsersPaginated(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/id/{id}")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        UserResponse response = userService.getUserById(id);
         return ResponseEntity.ok(response);
     }
 

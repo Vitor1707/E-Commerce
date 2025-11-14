@@ -2,6 +2,7 @@ package com.example.ecommerce.EcommerceAplication.dtos.responses;
 
 import com.example.ecommerce.EcommerceAplication.model.Role;
 import com.example.ecommerce.EcommerceAplication.model.User;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,9 @@ public class UserResponse {
     private String username;
     private String email;
     private List<Role> roles;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime updatedAt;
 
     public UserResponse(User user) {
@@ -27,8 +30,5 @@ public class UserResponse {
         this.roles = user.getRoles();
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
-    }
-
-    public UserResponse(UserResponse userResponse) {
     }
 }

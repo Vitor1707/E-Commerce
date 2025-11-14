@@ -1,4 +1,4 @@
-package com.example.ecommerce.EcommerceAplication.dtos.requests;
+package com.example.ecommerce.EcommerceAplication.dtos.updates;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
