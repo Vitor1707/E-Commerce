@@ -28,4 +28,7 @@ public class UserResponse {
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
     }
+
+    public UserResponse(UserResponse userResponse) {
+    }
 }
