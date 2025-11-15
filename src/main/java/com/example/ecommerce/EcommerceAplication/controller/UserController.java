@@ -2,8 +2,10 @@ package com.example.ecommerce.EcommerceAplication.controller;
 
 import com.example.ecommerce.EcommerceAplication.dtos.updates.UserUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.dtos.responses.UserResponse;
+import com.example.ecommerce.EcommerceAplication.model.User;
 import com.example.ecommerce.EcommerceAplication.services.UserService;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,9 +53,21 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @PostMapping("/{id}/promote_to_admin")
+    public ResponseEntity<UserResponse> promoteToAdmin(@PathVariable Long id) {
+        UserResponse response = userService.promoteToAdmin(id);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeUser(@PathVariable Long id) {
         userService.removeUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/promote_from_admin")
+    public ResponseEntity<UserResponse> removeFromAdmin(@PathVariable Long id) {
+        UserResponse response = userService.removeFromAdmin(id);
+        return ResponseEntity.ok(response);
     }
 }

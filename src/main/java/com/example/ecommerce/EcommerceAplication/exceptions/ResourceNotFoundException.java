@@ -2,6 +2,9 @@ package com.example.ecommerce.EcommerceAplication.exceptions;
 
 public class ResourceNotFoundException extends RuntimeException {
 
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
 
     public ResourceNotFoundException(String resourceName, Long id) {
         super(resourceName + " com ID '" + id + "' não encontrado");

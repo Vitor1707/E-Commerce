@@ -1,11 +1,14 @@
 package com.example.ecommerce.EcommerceAplication.services;
 
 import com.example.ecommerce.EcommerceAplication.dtos.requests.ProductRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.responses.CategoryResponse;
 import com.example.ecommerce.EcommerceAplication.dtos.updates.ProductUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.dtos.responses.ProductResponse;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
+import com.example.ecommerce.EcommerceAplication.model.Category;
 import com.example.ecommerce.EcommerceAplication.model.Product;
+import com.example.ecommerce.EcommerceAplication.repositories.CategoryRepository;
 import com.example.ecommerce.EcommerceAplication.repositories.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -16,10 +19,12 @@ import org.springframework.stereotype.Service;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
 
-    public ProductService(ProductRepository productRepository, ModelMapper modelMapper) {
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ModelMapper modelMapper) {
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
     }
 
@@ -29,11 +34,20 @@ public class ProductService {
     }
 
     public ProductResponse addProduct(ProductRequest request) {
-        Product product = modelMapper.map(request, Product.class);
+        Category category = categoryRepository.findByNameIgnoreCase(request.getCategory().getName().trim().toLowerCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "name", request.getCategory().getName()));
 
-        if(productRepository.existsByName(request.getName())) {
+        if(productRepository.existsByNameIgnoreCase(request.getName().trim().toLowerCase())) {
             throw new ConflictException("name", request.getName());
         }
+
+        Product product = new Product();
+
+        product.setName(request.getName());
+        product.setPrice(request.getPrice());
+        product.setCategory(category);
+        product.setDescription(request.getDescription());
+        product.setStockQuantity(request.getStockQuantity());
 
         Product productSaved = productRepository.save(product);
         return new ProductResponse(productSaved);

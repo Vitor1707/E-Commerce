@@ -4,6 +4,7 @@ import com.example.ecommerce.EcommerceAplication.dtos.updates.UserUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.dtos.responses.UserResponse;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
+import com.example.ecommerce.EcommerceAplication.model.Role;
 import com.example.ecommerce.EcommerceAplication.model.User;
 import com.example.ecommerce.EcommerceAplication.repositories.UserRepository;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,34 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
         return updateByField(user, request);
+    }
+
+    public UserResponse promoteToAdmin(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if(user.getRoles().contains(Role.ADMIN)) {
+            throw new ConflictException("User já é ADMIN");
+        }
+
+        user.getRoles().add(Role.ADMIN);
+
+        User userUpdated = userRepository.save(user);
+        return new UserResponse(userUpdated);
+    }
+
+    public UserResponse removeFromAdmin(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if(!user.getRoles().contains(Role.ADMIN)) {
+            throw new ConflictException("User não é ADMIN");
+        }
+
+        user.getRoles().remove(Role.ADMIN);
+
+        User userUpdated = userRepository.save(user);
+        return new UserResponse(userUpdated);
     }
 
     public void removeUser(Long id) {

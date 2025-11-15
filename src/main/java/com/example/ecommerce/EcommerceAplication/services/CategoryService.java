@@ -31,11 +31,16 @@ public class CategoryService {
     }
 
     public CategoryResponse createCategory(CategoryRequest request) {
-        Category category = modelMapper.map(request, Category.class);
+        String normalizedName = request.getName().trim().toLowerCase();
 
-        if(categoryRepository.existsByName(request.getName())) {
+        if(categoryRepository.existsByNameIgnoreCase(normalizedName)) {
             throw new ConflictException("name", request.getName());
         }
+
+        Category category = new Category();
+
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
 
         Category categorySaved = categoryRepository.save(category);
         return new CategoryResponse(categorySaved);
