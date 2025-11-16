@@ -6,4 +6,8 @@ public enum OrderStatus {
     SHIPPED,
     DELIVERED,
     CANCELLED;
+
+    public String getAuthority() {
+        return this.name();
+    }
 }

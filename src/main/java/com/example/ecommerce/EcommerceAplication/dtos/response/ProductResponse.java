@@ -1,16 +1,17 @@
-package com.example.ecommerce.EcommerceAplication.dtos.responses;
+package com.example.ecommerce.EcommerceAplication.dtos.response;
 
+import com.example.ecommerce.EcommerceAplication.dtos.from.CategoryFromProduct;
 import com.example.ecommerce.EcommerceAplication.model.Category;
 import com.example.ecommerce.EcommerceAplication.model.Product;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductResponse {
@@ -18,8 +19,7 @@ public class ProductResponse {
     private String name;
     private BigDecimal price;
     private String description;
-    private Integer stockQuantity;
-    private Category category;
+    private CategoryFromProduct category;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
@@ -30,9 +30,8 @@ public class ProductResponse {
         this.name = product.getName();
         this.price = product.getPrice();
         this.description = product.getDescription();
-        this.stockQuantity = product.getStockQuantity();
+        this.category = new CategoryFromProduct(product.getCategory().getId(), product.getCategory().getName());
         this.createdAt = product.getCreatedAt();
         this.updatedAt = product.getUpdatedAt();
-        this.category = product.getCategory();
     }
 }

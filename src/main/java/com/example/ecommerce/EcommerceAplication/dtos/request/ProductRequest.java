@@ -1,6 +1,5 @@
-package com.example.ecommerce.EcommerceAplication.dtos.requests;
+package com.example.ecommerce.EcommerceAplication.dtos.request;
 
-import com.example.ecommerce.EcommerceAplication.model.Category;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,16 +19,17 @@ public class ProductRequest {
     private String name;
 
     @NotNull(message = "price é obrigatório")
-    @Min(value = 1, message = "zero ou números negativos são inválidos")
+    @Min(value = 1, message = "price não pode ser zero nem menor que zero")
     private BigDecimal price;
 
-    @NotNull(message = "category é obrigatória")
-    private Category category;
+    @NotNull(message = "sotck quantity é obrigatório")
+    @Min(value = 1, message = "stock não pode ser zero ne um valor negativo")
+    private Integer stockQuantity;
 
-    @Size(min = 3, max = 500, message = "description deve ter entre 3 e 500 caracteres")
+    @Size(min = 3, max = 200, message = "description deve ter entre 3 e 200 caracteres")
     private String description;
 
-    @NotNull(message = "stockQuantity é obrigatório")
-    @Min(value = 1, message = "zero ou números negativos são inválidos")
-    private Integer stockQuantity;
+    @NotBlank(message = "category é obrigatório")
+    @Size(min = 3, max = 15, message = "category deve ter entre 3 e 15 caracteres")
+    private String category;
 }

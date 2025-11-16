@@ -1,11 +1,9 @@
 package com.example.ecommerce.EcommerceAplication.controller;
 
-import com.example.ecommerce.EcommerceAplication.dtos.updates.UserUpdateRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.UserResponse;
-import com.example.ecommerce.EcommerceAplication.model.User;
+import com.example.ecommerce.EcommerceAplication.dtos.response.UserResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.update.UserUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.services.UserService;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +23,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<UserResponse>> UsersPaginated(
+    public ResponseEntity<Page<UserResponse>> usersPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sort,
@@ -37,13 +35,13 @@ public class UserController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
-        Page<UserResponse> response = userService.UsersPaginated(pageable);
+        Page<UserResponse> response = userService.usersPaginated(pageable);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        UserResponse response = userService.getUserById(id);
+    public ResponseEntity<UserResponse> findUserById(@PathVariable Long id) {
+        UserResponse response = userService.findUserById(id);
         return ResponseEntity.ok(response);
     }
 
@@ -54,7 +52,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/promote_to_admin")
-    public ResponseEntity<UserResponse> promoteToAdmin(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> promoteUserToAdmin(@PathVariable Long id) {
         UserResponse response = userService.promoteToAdmin(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -65,8 +63,8 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}/promote_from_admin")
-    public ResponseEntity<UserResponse> removeFromAdmin(@PathVariable Long id) {
+    @DeleteMapping("/{id}/remove_from_admin")
+    public ResponseEntity<UserResponse> removeUserFromAdmin(@PathVariable Long id) {
         UserResponse response = userService.removeFromAdmin(id);
         return ResponseEntity.ok(response);
     }

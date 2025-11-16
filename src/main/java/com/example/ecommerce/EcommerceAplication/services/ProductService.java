@@ -1,16 +1,14 @@
 package com.example.ecommerce.EcommerceAplication.services;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.ProductRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.CategoryResponse;
-import com.example.ecommerce.EcommerceAplication.dtos.updates.ProductUpdateRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.ProductResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.request.ProductRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.response.ProductResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.update.ProductUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
 import com.example.ecommerce.EcommerceAplication.model.Category;
 import com.example.ecommerce.EcommerceAplication.model.Product;
 import com.example.ecommerce.EcommerceAplication.repositories.CategoryRepository;
 import com.example.ecommerce.EcommerceAplication.repositories.ProductRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,37 +18,60 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ModelMapper modelMapper) {
+    public ProductService(ProductRepository productRepository,
+                          CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
-        this.modelMapper = modelMapper;
     }
 
     public Page<ProductResponse> productsPaginated(Pageable pageable) {
         Page<Product> productsPage = productRepository.findAll(pageable);
+
         return productsPage.map(ProductResponse::new);
     }
 
-    public ProductResponse addProduct(ProductRequest request) {
-        Category category = categoryRepository.findByNameIgnoreCase(request.getCategory().getName().trim().toLowerCase())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "name", request.getCategory().getName()));
+    public ProductResponse createProduct(ProductRequest request) {
+        Product product = new Product();
 
-        if(productRepository.existsByNameIgnoreCase(request.getName().trim().toLowerCase())) {
+        if(productRepository.existsByName(request.getName())) {
             throw new ConflictException("name", request.getName());
         }
 
-        Product product = new Product();
+        if(!categoryRepository.existsByNameIgnoreCase(request.getCategory().trim().toLowerCase())) {
+            throw new ResourceNotFoundException("Category", "name", request.getCategory());
+        }
 
         product.setName(request.getName());
         product.setPrice(request.getPrice());
-        product.setCategory(category);
-        product.setDescription(request.getDescription());
         product.setStockQuantity(request.getStockQuantity());
+        product.setDescription(request.getDescription());
+        product.getCategory().setName(request.getCategory());
 
         Product productSaved = productRepository.save(product);
+
         return new ProductResponse(productSaved);
+    }
+
+    public ProductResponse findProductById(Long id) {
+        return productRepository.findById(id)
+                .map(ProductResponse::new)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+    }
+
+    public ProductResponse findProductByName(String name) {
+        return productRepository.findByNameIgnoreCase(name)
+                .map(ProductResponse::new)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "name", name));
+    }
+
+    public ProductResponse findProductByCategory(String nameCategory) {
+        Category category = categoryRepository.findByNameIgnoreCase(nameCategory)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "name", nameCategory));
+
+        return productRepository.findByCategory(category)
+                .map(ProductResponse::new)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "category name", category.getName()));
     }
 
     public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
@@ -71,9 +92,10 @@ public class ProductService {
     private ProductResponse updateProductByField(Product product, ProductUpdateRequest request) {
         if(
                 request.getName() != null
-                && !request.getName().equalsIgnoreCase(product.getName())
+                && !product.getName().equalsIgnoreCase(request.getName())
                 && !request.getName().isEmpty()
         ) {
+
             if(productRepository.existsByNameAndIdNot(request.getName(), product.getId())) {
                 throw new ConflictException("name", request.getName());
             }
@@ -83,27 +105,38 @@ public class ProductService {
 
         if(
                 request.getPrice() != null
-                && !request.getPrice().equals(product.getPrice())
+                && !(product.getPrice().equals(request.getPrice()))
         ) {
-
             product.setPrice(request.getPrice());
         }
 
         if(
-                request.getDescription() != null
-                        && !request.getDescription().equalsIgnoreCase(product.getDescription())
-                        && !request.getDescription().isEmpty()
+                request.getStockQuantity() != null
+                && !(product.getStockQuantity().equals(request.getStockQuantity()))
+                && request.getStockQuantity() > product.getStockQuantity()
         ) {
+            product.setStockQuantity(request.getStockQuantity());
+        }
 
+        if(
+                request.getDescription() != null
+                && !product.getDescription().equalsIgnoreCase(request.getDescription())
+                && !request.getDescription().isEmpty()
+        ) {
             product.setDescription(request.getDescription());
         }
 
         if(
-                request.getStockQuantity() != null
-                        && !request.getStockQuantity().equals(product.getStockQuantity())
+                request.getCategory() != null
+                && !product.getCategory().getName().equalsIgnoreCase(request.getCategory())
+                && !request.getCategory().isEmpty()
         ) {
 
-            product.setStockQuantity(request.getStockQuantity());
+            if(!categoryRepository.existsByNameIgnoreCase(request.getName())) {
+                throw new ResourceNotFoundException("Category", "name", request.getCategory());
+            }
+
+            product.getCategory().setName(request.getCategory());
         }
 
         Product productUpdated = productRepository.save(product);

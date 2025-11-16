@@ -1,8 +1,8 @@
 package com.example.ecommerce.EcommerceAplication.services;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.CartItemRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.CartItemResponse;
-import com.example.ecommerce.EcommerceAplication.dtos.updates.CartItemUpdateRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.request.CartItemRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.response.CartItemResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.update.CartItemUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
 import com.example.ecommerce.EcommerceAplication.model.CartItem;
@@ -21,17 +21,48 @@ import java.util.Optional;
 @Service
 public class CartItemService {
 
+    private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final CartItemRepository cartItemRepository;
 
-    public CartItemService(UserRepository userRepository, ProductRepository productRepository, CartItemRepository cartItemRepository) {
+    public CartItemService(CartItemRepository cartItemRepository,
+                           UserRepository userRepository,
+                           ProductRepository productRepository) {
+        this.cartItemRepository = cartItemRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
-        this.cartItemRepository = cartItemRepository;
     }
 
-    public List<CartItemResponse> getCartList(Long idUser) {
+    public CartItemResponse addToCart(CartItemRequest request) {
+        User user = userRepository.findById(request.getIdUser())
+                .orElseThrow(() -> new ResourceNotFoundException("User", request.getIdUser()));
+
+        Product product = productRepository.findById(request.getIdProduct())
+                .orElseThrow(() -> new ResourceNotFoundException("Product", request.getIdProduct()));
+
+        if(request.getQuantity() > product.getStockQuantity()) {
+            throw new ConflictException("Estoque insuficiente");
+        }
+
+        Optional<CartItem> existingItem = cartItemRepository.findByUserAndProduct(user, product);
+
+        if(existingItem.isPresent()) {
+            CartItem item = existingItem.get();
+            item.setQuantity(item.getQuantity() + request.getQuantity());
+            return new CartItemResponse(item);
+        }
+
+        CartItem cartItem = new CartItem();
+
+        cartItem.setUser(user);
+        cartItem.setProduct(product);
+        cartItem.setQuantity(request.getQuantity());
+
+        CartItem cartItemSaved = cartItemRepository.save(cartItem);
+        return new CartItemResponse(cartItemSaved);
+    }
+
+    public List<CartItemResponse> getAllCarts(Long idUser) {
         User user = userRepository.findById(idUser)
                 .orElseThrow(() -> new ResourceNotFoundException("User", idUser));
 
@@ -45,41 +76,12 @@ public class CartItemService {
         User user = userRepository.findById(idUser)
                 .orElseThrow(() -> new ResourceNotFoundException("User", idUser));
 
-        Page<CartItem> getCartPages = cartItemRepository.findAllByUser(user, pageable);
+        Page<CartItem> cartItemsPage = cartItemRepository.findAllByUser(user, pageable);
 
-        return getCartPages.map(CartItemResponse::new);
+        return cartItemsPage.map(CartItemResponse::new);
     }
 
-    public CartItemResponse addToCart(CartItemRequest request) {
-        User user = userRepository.findById(request.getIdUser())
-                .orElseThrow(() -> new ResourceNotFoundException("User", request.getIdUser()));
-
-        Product product = productRepository.findById(request.getIdProduct())
-                .orElseThrow(() -> new ResourceNotFoundException("Product", request.getIdProduct()));
-
-        if(product.getStockQuantity() < request.getQuantity()) {
-            throw new ConflictException("Quantidade em estoque insuficiente");
-        }
-
-        Optional<CartItem> existingItem = cartItemRepository.findByUserAndProduct(user, product);
-
-        if(existingItem.isPresent()) {
-            CartItem item = existingItem.get();
-            item.setQuantity(item.getQuantity() + request.getQuantity());
-            return new CartItemResponse(item);
-        }
-
-        CartItem cartItem = new CartItem();
-
-        cartItem.setQuantity(request.getQuantity());
-        cartItem.setUser(user);
-        cartItem.setProduct(product);
-
-        CartItem cartItemSaved = cartItemRepository.save(cartItem);
-        return new CartItemResponse(cartItemSaved);
-    }
-
-    public CartItemResponse updateQuantity(CartItemUpdateRequest request) {
+    public CartItemResponse updateQuantityCart(CartItemUpdateRequest request) {
         User user = userRepository.findById(request.getIdUser())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.getIdUser()));
 
@@ -87,19 +89,19 @@ public class CartItemService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", request.getIdProduct()));
 
         CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new ResourceNotFoundException("User ou product não encontrados"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cart Item com esse user ou product não foi encontrado"));
 
-        if(product.getStockQuantity() < (request.getQuantity() + cartItem.getQuantity())) {
-            throw new ConflictException("Quantidade em estoque insuficiente");
+        if((request.getQuantity() + cartItem.getQuantity()) > product.getStockQuantity()) {
+            throw new ConflictException("Estoque insuficente");
         }
 
-        cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
+        cartItem.setQuantity(request.getQuantity() + cartItem.getQuantity());
 
         CartItem cartItemUpdated = cartItemRepository.save(cartItem);
         return new CartItemResponse(cartItemUpdated);
     }
 
-    public CartItemResponse removeQuantity(CartItemUpdateRequest request) {
+    public CartItemResponse removeQuantityFromCart(CartItemUpdateRequest request) {
         User user = userRepository.findById(request.getIdUser())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.getIdUser()));
 
@@ -107,11 +109,11 @@ public class CartItemService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", request.getIdProduct()));
 
         CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new ResourceNotFoundException("User ou product não encontrados"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cart Item com esse user ou product não foi encontrado"));
 
-        int newQuantity = cartItem.getQuantity() - request.getQuantity();
+        int quantity = cartItem.getQuantity() - request.getQuantity();
 
-        if(newQuantity <= 0) {
+        if(quantity <= 0) {
             cartItemRepository.delete(cartItem);
             return null;
         }
@@ -122,7 +124,7 @@ public class CartItemService {
         return new CartItemResponse(cartItemUpdated);
     }
 
-    public void removeFromCart(Long idUser, Long idProduct) {
+    public void removeProductFromCart(Long idUser, Long idProduct) {
         User user = userRepository.findById(idUser)
                 .orElseThrow(() -> new ResourceNotFoundException("User", idUser));
 
@@ -130,7 +132,7 @@ public class CartItemService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", idProduct));
 
         CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new ResourceNotFoundException("User ou Product não encontrados"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cart Item com esse user ou product não foi encontrado"));
 
         cartItemRepository.deleteById(cartItem.getId());
     }
@@ -139,8 +141,8 @@ public class CartItemService {
         User user = userRepository.findById(idUser)
                 .orElseThrow(() -> new ResourceNotFoundException("User", idUser));
 
-        List<CartItem> userCart = cartItemRepository.findAllByUser(user);
+        List<CartItem> cartItem = cartItemRepository.findAllByUser(user);
 
-        cartItemRepository.deleteAll(userCart);
+        cartItemRepository.deleteAll(cartItem);
     }
 }

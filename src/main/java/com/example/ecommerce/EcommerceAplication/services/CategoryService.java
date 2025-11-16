@@ -1,89 +1,58 @@
 package com.example.ecommerce.EcommerceAplication.services;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.CategoryRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.CategoryResponse;
-import com.example.ecommerce.EcommerceAplication.dtos.updates.CategoryUpdateRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.request.CategoryRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.response.CategoryResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.response.ProductResponse;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
 import com.example.ecommerce.EcommerceAplication.model.Category;
+import com.example.ecommerce.EcommerceAplication.model.Product;
 import com.example.ecommerce.EcommerceAplication.repositories.CategoryRepository;
-import org.modelmapper.ModelMapper;
+import com.example.ecommerce.EcommerceAplication.repositories.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
+    private final ProductRepository productRepository;
 
-    public CategoryService(CategoryRepository categoryRepository, ModelMapper modelMapper) {
+    public CategoryService(CategoryRepository categoryRepository,
+                           ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
-        this.modelMapper = modelMapper;
+        this.productRepository = productRepository;
     }
 
-    public List<CategoryResponse> getCategories() {
-        return categoryRepository.findAll()
-                .stream()
-                .map(CategoryResponse::new)
-                .toList();
-    }
 
     public CategoryResponse createCategory(CategoryRequest request) {
-        String normalizedName = request.getName().trim().toLowerCase();
+        Category category = new Category();
 
-        if(categoryRepository.existsByNameIgnoreCase(normalizedName)) {
+        if(categoryRepository.existsByNameIgnoreCase(request.getName())) {
             throw new ConflictException("name", request.getName());
         }
-
-        Category category = new Category();
 
         category.setName(request.getName());
         category.setDescription(request.getDescription());
 
         Category categorySaved = categoryRepository.save(category);
+
         return new CategoryResponse(categorySaved);
     }
 
-    public CategoryResponse updateCategory(Long id, CategoryUpdateRequest request) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", id));
+    public Page<CategoryResponse> categoriesPaginated(Pageable pageable) {
+        Page<Category> categoriesPage = categoryRepository.findAll(pageable);
 
-        return updateCategoryByField(category, request);
+        return categoriesPage.map(CategoryResponse::new);
     }
 
-    public void removeCategory(Long id) {
-        if(!categoryRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Category", id);
-        }
+    public Page<ProductResponse> getProductsByCategory(String name, Pageable pageable) {
+        Category category = categoryRepository.findByNameIgnoreCase(name.trim().toLowerCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "name", name));
 
-        categoryRepository.deleteById(id);
-    }
+        Page<Product> productsPage = productRepository.findAllByCategory(category, pageable);
 
-    private CategoryResponse updateCategoryByField(Category category, CategoryUpdateRequest request) {
-        if(
-                request.getName() != null
-                && !request.getName().equalsIgnoreCase(category.getName())
-                && !request.getName().isEmpty()
-        ) {
-
-            if(categoryRepository.existsByNameAndIdNot(request.getName(), category.getId())) {
-                throw new ConflictException("name", request.getName());
-            }
-
-            category.setName(request.getName());
-        }
-        if(
-                request.getDescription() != null
-                        && !request.getDescription().equalsIgnoreCase(category.getDescription())
-                        && !request.getDescription().isEmpty()
-        ) {
-
-            category.setDescription(request.getDescription());
-        }
-
-        Category categoryUpdated = categoryRepository.save(category);
-        return new CategoryResponse(categoryUpdated);
+        return productsPage.map(ProductResponse::new);
     }
 }

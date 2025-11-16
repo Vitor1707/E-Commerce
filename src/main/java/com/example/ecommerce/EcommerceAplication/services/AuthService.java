@@ -1,8 +1,8 @@
 package com.example.ecommerce.EcommerceAplication.services;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.LoginRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.requests.UserRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.UserResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.request.LoginRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.request.UserRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.response.UserResponse;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
 import com.example.ecommerce.EcommerceAplication.model.Role;
@@ -10,6 +10,8 @@ import com.example.ecommerce.EcommerceAplication.model.User;
 import com.example.ecommerce.EcommerceAplication.repositories.UserRepository;
 import com.example.ecommerce.EcommerceAplication.security.JwtService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,17 +21,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManage;
     private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, ModelMapper modelMapper, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManage, JwtService jwtService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
-        this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManage = authenticationManage;
         this.jwtService = jwtService;
     }
 
@@ -43,12 +47,12 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.getRoles().add(Role.USER);
 
-        User userSaved = userRepository.save(user);
+        User userSaved  = userRepository.save(user);
         return new UserResponse(userSaved);
     }
 
     public String login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        Authentication authentication = authenticationManage.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
@@ -58,7 +62,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
 
-        String token = jwtService.generatedToken(user.getEmail());
+        String token = jwtService.generateToken(user.getEmail());
 
         return token;
     }

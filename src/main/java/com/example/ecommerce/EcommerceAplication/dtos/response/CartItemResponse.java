@@ -1,4 +1,4 @@
-package com.example.ecommerce.EcommerceAplication.dtos.responses;
+package com.example.ecommerce.EcommerceAplication.dtos.response;
 
 import com.example.ecommerce.EcommerceAplication.dtos.from.ProductFromCartItem;
 import com.example.ecommerce.EcommerceAplication.dtos.from.UserFromCartItem;
@@ -9,8 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -21,16 +19,13 @@ public class CartItemResponse {
     private UserFromCartItem user;
     private ProductFromCartItem product;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime createdAt;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime updatedAt;
 
     public CartItemResponse(CartItem cartItem) {
         this.id = cartItem.getId();
         this.quantity = cartItem.getQuantity();
-        this.createdAt = cartItem.getCreatedAt();
+        this.user = new UserFromCartItem(cartItem.getUser().getId(), cartItem.getUser().getUsername());
+        this.product = new ProductFromCartItem(cartItem.getProduct().getId(), cartItem.getProduct().getName(), cartItem.getProduct().getPrice());
         this.updatedAt = cartItem.getUpdatedAt();
-        this.user = new UserFromCartItem(cartItem.getUser());
-        this.product = new ProductFromCartItem(cartItem.getProduct());
     }
 }

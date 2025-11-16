@@ -1,8 +1,8 @@
 package com.example.ecommerce.EcommerceAplication.controller;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.ProductRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.updates.ProductUpdateRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.ProductResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.request.ProductRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.response.ProductResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.update.ProductUpdateRequest;
 import com.example.ecommerce.EcommerceAplication.services.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -14,11 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/product")
+@RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
-
 
     public ProductController(ProductService productService) {
         this.productService = productService;
@@ -37,17 +36,35 @@ public class ProductController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
-        Page<ProductResponse> productsPage = productService.productsPaginated(pageable);
-        return ResponseEntity.ok(productsPage);
+        Page<ProductResponse> response = productService.productsPaginated(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid ProductRequest request) {
-        ProductResponse response = productService.addProduct(request);
+    public ResponseEntity<ProductResponse> createProduct(@RequestBody @Valid ProductRequest request) {
+        ProductResponse response = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/id/{id}/update")
+    @GetMapping("/id/{id}")
+    public ResponseEntity<ProductResponse> findProductById(@PathVariable Long id) {
+        ProductResponse response = productService.findProductById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/name/{name}")
+    public ResponseEntity<ProductResponse> findProductByName(@PathVariable String name) {
+        ProductResponse response = productService.findProductByName(name);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/category/{category}")
+    public ResponseEntity<ProductResponse> findProductByCategory(@PathVariable String category) {
+        ProductResponse response = productService.findProductByCategory(category);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/update")
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody @Valid ProductUpdateRequest request) {
         ProductResponse response = productService.updateProduct(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);

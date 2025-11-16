@@ -1,4 +1,4 @@
-package com.example.ecommerce.EcommerceAplication.dtos.responses;
+package com.example.ecommerce.EcommerceAplication.dtos.response;
 
 import com.example.ecommerce.EcommerceAplication.model.Role;
 import com.example.ecommerce.EcommerceAplication.model.User;
@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -17,7 +18,8 @@ public class UserResponse {
     private Long id;
     private String username;
     private String email;
-    private List<Role> roles;
+    private String password;
+    private List<Role> roles = new ArrayList<>();
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
@@ -27,6 +29,7 @@ public class UserResponse {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
+        this.password = user.getPassword();
         this.roles = user.getRoles();
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();

@@ -1,4 +1,4 @@
-package com.example.ecommerce.EcommerceAplication.dtos.requests;
+package com.example.ecommerce.EcommerceAplication.dtos.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,6 +14,6 @@ public class CategoryRequest {
     @Size(min = 3, max = 15, message = "name deve ter entre 3 e 15 caracteres")
     private String name;
 
-    @Size(min = 3, max = 100, message = "description deve ter entre 3 e 100 caracteres")
+    @Size(min = 3, max = 500, message = "description deve ter entre 3 e 500 caracteres")
     private String description;
 }

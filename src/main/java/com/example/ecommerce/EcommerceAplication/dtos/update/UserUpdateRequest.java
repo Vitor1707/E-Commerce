@@ -1,7 +1,6 @@
-package com.example.ecommerce.EcommerceAplication.dtos.requests;
+package com.example.ecommerce.EcommerceAplication.dtos.update;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,12 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginRequest {
-    @NotBlank(message = "email é obrigatório")
+public class UserUpdateRequest {
+    @Size(min = 3, max = 20, message = "username deve ter entre 3 e 20 caracteres")
+    private String username;
     @Email(message = "formato de email inválido")
     private String email;
-
-    @NotBlank(message = "password é obrigatória")
     @Size(min = 6, message = "password deve ter no mínimo 6 caracteres")
     private String password;
 }

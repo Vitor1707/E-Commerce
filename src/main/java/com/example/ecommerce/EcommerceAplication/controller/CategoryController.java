@@ -1,18 +1,20 @@
 package com.example.ecommerce.EcommerceAplication.controller;
 
-import com.example.ecommerce.EcommerceAplication.dtos.requests.CategoryRequest;
-import com.example.ecommerce.EcommerceAplication.dtos.responses.CategoryResponse;
-import com.example.ecommerce.EcommerceAplication.dtos.updates.CategoryUpdateRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.request.CategoryRequest;
+import com.example.ecommerce.EcommerceAplication.dtos.response.CategoryResponse;
+import com.example.ecommerce.EcommerceAplication.dtos.response.ProductResponse;
 import com.example.ecommerce.EcommerceAplication.services.CategoryService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/category")
+@RequestMapping("/api/categories")
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -21,27 +23,44 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<CategoryResponse>> getCategories() {
-        List<CategoryResponse> response = categoryService.getCategories();
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@RequestBody @Valid CategoryRequest request) {
         CategoryResponse response = categoryService.createCategory(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/id/{id}/update")
-    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryUpdateRequest request) {
-        CategoryResponse response = categoryService.updateCategory(id, request);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+    @GetMapping
+    public ResponseEntity<Page<CategoryResponse>> categoriesPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+        Page<CategoryResponse> response = categoryService.categoriesPaginated(pageable);
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<Void> removeCategory(@PathVariable Long id) {
-        categoryService.removeCategory(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/product")
+    public ResponseEntity<Page<ProductResponse>> getProductsByCategory(
+            @RequestBody String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+        Page<ProductResponse> response = categoryService.getProductsByCategory(name, pageable);
+        return ResponseEntity.ok(response);
     }
 }

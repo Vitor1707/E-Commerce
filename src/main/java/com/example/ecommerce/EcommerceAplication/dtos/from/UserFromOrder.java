@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserFromCartItem {
+public class UserFromOrder {
     private Long id;
     private String username;
 
-    public UserFromCartItem(User user) {
+    public UserFromOrder(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
     }
