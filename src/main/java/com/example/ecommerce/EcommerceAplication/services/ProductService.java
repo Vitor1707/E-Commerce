@@ -42,11 +42,14 @@ public class ProductService {
             throw new ResourceNotFoundException("Category", "name", request.getCategory());
         }
 
+        Category category = categoryRepository.findByNameIgnoreCase(request.getName().trim().toLowerCase())
+                        .orElseThrow(() -> new ResourceNotFoundException("Category", "name", request.getName()));
+
         product.setName(request.getName());
         product.setPrice(request.getPrice());
         product.setStockQuantity(request.getStockQuantity());
         product.setDescription(request.getDescription());
-        product.getCategory().setName(request.getCategory());
+        product.setCategory(category);
 
         Product productSaved = productRepository.save(product);
 

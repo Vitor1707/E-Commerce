@@ -78,6 +78,9 @@ public class OrderService {
         order.setOrderItems(orderItems);
 
         Order orderSaved = orderRepository.save(order);
+
+        cartItemService.clearCart(idUser);
+
         return new OrderResponse(orderSaved);
     }
 
