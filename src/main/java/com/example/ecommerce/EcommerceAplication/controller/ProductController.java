@@ -59,8 +59,20 @@ public class ProductController {
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<ProductResponse> findProductByCategory(@PathVariable String category) {
-        ProductResponse response = productService.findProductByCategory(category);
+    public ResponseEntity<Page<ProductResponse>> findProductByCategory(
+            @PathVariable String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+        Page<ProductResponse> response = productService.findProductByCategory(category, pageable);
         return ResponseEntity.ok(response);
     }
 

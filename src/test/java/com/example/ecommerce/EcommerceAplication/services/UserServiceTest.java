@@ -45,7 +45,7 @@ class UserServiceTest {
         user1 = new User(1L, "User1", "user1@email.com", List.of(Role.USER, Role.ADMIN), "pass123", LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>(), new ArrayList<>());
         user2 =  new User(1L, "User2", "user2@email.com", List.of(Role.USER), "pass123", LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>(), new ArrayList<>());
         updateRequest = new UserUpdateRequest("User Atualizado", "user_atualizado@email.com", "password Atualizada");
-        pageable = PageRequest.of(0, 5, Sort.by("asc", "id"));
+        pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "id"));
     }
 
     @Test

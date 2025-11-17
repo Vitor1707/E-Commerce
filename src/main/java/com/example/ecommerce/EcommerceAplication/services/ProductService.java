@@ -42,8 +42,8 @@ public class ProductService {
             throw new ResourceNotFoundException("Category", "name", request.getCategory());
         }
 
-        Category category = categoryRepository.findByNameIgnoreCase(request.getName().trim().toLowerCase())
-                        .orElseThrow(() -> new ResourceNotFoundException("Category", "name", request.getName()));
+        Category category = categoryRepository.findByNameIgnoreCase(request.getCategory().trim().toLowerCase())
+                        .orElseThrow(() -> new ResourceNotFoundException("Category", "name", request.getCategory()));
 
         product.setName(request.getName());
         product.setPrice(request.getPrice());
@@ -68,13 +68,13 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "name", name));
     }
 
-    public ProductResponse findProductByCategory(String nameCategory) {
+    public Page<ProductResponse> findProductByCategory(String nameCategory, Pageable pageable) {
         Category category = categoryRepository.findByNameIgnoreCase(nameCategory)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "name", nameCategory));
 
-        return productRepository.findByCategory(category)
-                .map(ProductResponse::new)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "category name", category.getName()));
+        Page<Product> productsPage = productRepository.findAllByCategory(category, pageable);
+
+        return productsPage.map(ProductResponse::new);
     }
 
     public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
@@ -131,11 +131,10 @@ public class ProductService {
 
         if(
                 request.getCategory() != null
-                && !product.getCategory().getName().equalsIgnoreCase(request.getCategory())
                 && !request.getCategory().isEmpty()
         ) {
 
-            if(!categoryRepository.existsByNameIgnoreCase(request.getName())) {
+            if(!categoryRepository.existsByNameIgnoreCase(request.getCategory().trim().toLowerCase())) {
                 throw new ResourceNotFoundException("Category", "name", request.getCategory());
             }
 
