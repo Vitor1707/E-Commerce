@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import org.springframework.security.web.server.ui.OneTimeTokenSubmitPageGeneratingWebFilter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -61,8 +62,8 @@ class CartItemServiceTest {
     @BeforeEach
     void setUp() {
         user = new User(1L, "User", "user@email.com", List.of(Role.USER, Role.ADMIN), "pass123", LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>(), new ArrayList<>());
-        product = new Product(1L, "Product", BigDecimal.valueOf(100), 1000, "Product Description", LocalDateTime.now(), LocalDateTime.now(), category, new ArrayList<>(), new ArrayList<>());
         category = new Category(1L, "Category", "Category Description", LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>());
+        product = new Product(1L, "Product", BigDecimal.valueOf(100), 1000, "Product Description", LocalDateTime.now(), LocalDateTime.now(), category, new ArrayList<>(), new ArrayList<>());
         cartItem = new CartItem(1L, 100, LocalDateTime.now(), user, product);
         cartItem1 = new CartItem(2L, 200, LocalDateTime.now(), user, product);
         request = new CartItemRequest(1L, 1L, 100);

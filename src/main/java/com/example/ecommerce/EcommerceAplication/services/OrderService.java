@@ -6,7 +6,6 @@ import com.example.ecommerce.EcommerceAplication.dtos.response.OrderResponse;
 import com.example.ecommerce.EcommerceAplication.exceptions.ConflictException;
 import com.example.ecommerce.EcommerceAplication.exceptions.ResourceNotFoundException;
 import com.example.ecommerce.EcommerceAplication.model.*;
-import com.example.ecommerce.EcommerceAplication.repositories.CartItemRepository;
 import com.example.ecommerce.EcommerceAplication.repositories.OrderRepository;
 import com.example.ecommerce.EcommerceAplication.repositories.ProductRepository;
 import com.example.ecommerce.EcommerceAplication.repositories.UserRepository;
@@ -25,17 +24,20 @@ public class OrderService {
     private final CartItemService cartItemService;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final CartItemRepository cartItemRepository;
+    private final OrderItemService orderItemService;
 
-    public OrderService(OrderRepository orderRepository, CartItemService cartItemService,
-                        UserRepository userRepository,
-                        ProductRepository productRepository,
-                        CartItemRepository cartItemRepository) {
+    public OrderService(
+            OrderRepository orderRepository,
+            CartItemService cartItemService,
+            UserRepository userRepository,
+            ProductRepository productRepository,
+            OrderItemService orderItemService
+    ) {
         this.orderRepository = orderRepository;
         this.cartItemService = cartItemService;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
-        this.cartItemRepository = cartItemRepository;
+        this.orderItemService = orderItemService;
     }
 
     public OrderResponse addOrderFromCart(Long idUser) {
@@ -49,32 +51,13 @@ public class OrderService {
 
         List<CartItemResponse> cartItems = cartItemService.getAllCarts(idUser);
 
-        List<OrderItem> orderItems = new ArrayList<>();
-        for(CartItemResponse cartItem : cartItems) {
-            Product product = productRepository.findById(cartItem.getProduct().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product", cartItem.getProduct().getId()));
-
-            if(cartItem.getQuantity() > product.getStockQuantity()) {
-                throw new ConflictException("Estoque insuficiente, produto: " + product.getName() +
-                        ". Disponível: " + product.getStockQuantity() +
-                        ", Solicitado: " + cartItem.getQuantity());
-            }
-
-            product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
-            productRepository.save(product);
-
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setProduct(product);
-            orderItem.setPrice(product.getPrice());
-            orderItem.setQuantity(cartItem.getQuantity());
-
-            orderItems.add(orderItem);
+        if(cartItems.isEmpty()) {
+            throw new ConflictException("Cart Item está vazio");
         }
 
-        order.setTotalAmount(orderItems.stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        List<OrderItem> orderItems = orderItemService.createListOfOrderItem(order, cartItems);
+
+        order.setTotalAmount(sumTotalAmount(orderItems));
         order.setOrderItems(orderItems);
 
         Order orderSaved = orderRepository.save(order);
@@ -116,10 +99,7 @@ public class OrderService {
 
         orderItems.add(orderItem);
 
-        order.setTotalAmount(orderItems
-                .stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        order.setTotalAmount(sumTotalAmount(orderItems));
         order.setOrderItems(orderItems);
 
         Order orderSaved = orderRepository.save(order);
@@ -158,12 +138,19 @@ public class OrderService {
         for(OrderItem orderItem : order.getOrderItems()) {
             Product product = orderItem.getProduct();
             product.setStockQuantity(product.getStockQuantity() + orderItem.getQuantity());
-            productRepository.save(product);//////
+            productRepository.save(product);
         }
 
         order.setStatus(OrderStatus.CANCELLED);
 
         Order orderUpdated = orderRepository.save(order);
         return new OrderResponse(orderUpdated);
+    }
+
+    public BigDecimal sumTotalAmount(List<OrderItem> orderItems) {
+        return orderItems
+                .stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
